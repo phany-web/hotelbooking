@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  CLEANING
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model Role {
+  id          String  @id @default(uuid())
+  roleName    String  @unique
+  description String?
+
+  users User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("roles")
+}
+
+model User {
+  id String @id @default(uuid())
+
+  fullName String
+  email    String  @unique
+  phone    String?
+
+  password String
+
+  isActive Boolean @default(true)
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id])
+
+  hotelId String?
+  hotel   Hotel?  @relation("HotelStaffs", fields: [hotelId], references: [id])
+
+  bookings      Booking[]
+  notifications Notification[]
+  reviews       Review[]
+
+  ownedHotels Hotel[] @relation("HotelOwner")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Hotel {
+  id String @id @default(uuid())
+
+  hotelName   String
+  description String?
+
+  address  String
+  location String
+
+  phone String?
+  email String?
+
+  adminId String
+  admin   User   @relation("HotelOwner", fields: [adminId], references: [id])
+
+  images HotelImage[]
+
+  staffs User[] @relation("HotelStaffs")
+
+  rooms   Room[]
+  reviews Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("hotels")
+}
+
+model HotelImage {
+  id String @id @default(uuid())
+
+  imageUrl String
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("hotel_images")
+}
+
+model RoomType {
+  id String @id @default(uuid())
+
+  typeName String
+
+  description String?
+
+  maxOccupancy Int
+
+  rooms Room[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("room_types")
+}
+
+model Room {
+  id String @id @default(uuid())
+
+  roomNumber String
+
+  floorNumber Int?
+
+  price Decimal @db.Decimal(10, 2)
+
+  status RoomStatus @default(AVAILABLE)
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id])
+
+  roomTypeId String
+  roomType   RoomType @relation(fields: [roomTypeId], references: [id])
+
+  bookingDetails BookingDetail[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([hotelId, roomNumber])
+  @@map("rooms")
+}
+
+model Booking {
+  id String @id @default(uuid())
+
+  bookingDate DateTime @default(now())
+
+  checkInDate  DateTime
+  checkOutDate DateTime
+
+  status BookingStatus @default(PENDING)
+
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  bookingDetails  BookingDetail[]
+  payments        Payment[]
+  notifications   Notification[]
+  bookingServices BookingService[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("bookings")
+  @@index([userId])
+@@index([status])
+}
+
+model BookingDetail {
+  id String @id @default(uuid())
+
+  checkInDate  DateTime
+  checkOutDate DateTime
+
+  pricePerRoom Decimal @db.Decimal(10, 2)
+
+  subTotal Decimal @db.Decimal(10, 2)
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("booking_details")
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  amount Decimal @db.Decimal(10, 2)
+
+  paymentMethod String
+
+  paymentStatus PaymentStatus @default(PENDING)
+
+  transactionRef String?
+
+  paymentDate DateTime @default(now())
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payments")
+  @@index([bookingId])
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  title   String
+  message String
+
+  isRead Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+  @@index([userId])
+}
+
+model Review {
+  id String @id @default(uuid())
+
+  rating Int
+
+  comment String?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  hotelId String
+  hotel   Hotel  @relation(fields: [hotelId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+model Service {
+  id String @id @default(uuid())
+
+  serviceName String
+
+  description String?
+
+  price Decimal @db.Decimal(10, 2)
+
+  isActive Boolean @default(true)
+
+  bookingServices BookingService[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("services")
+}
+
+model BookingService {
+  id String @id @default(uuid())
+
+  quantity Int
+
+  price Decimal @db.Decimal(10, 2)
+
+  subTotal Decimal @db.Decimal(10, 2)
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id])
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("booking_services")
+}
+
+model Advertisement {
+  id String @id @default(uuid())
+
+  title String
+
+  imageUrl String
+
+  targetUrl String
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("advertisements")
+}
