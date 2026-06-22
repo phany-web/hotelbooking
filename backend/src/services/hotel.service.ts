@@ -165,6 +165,33 @@ export const deleteHotel = async (hotelId: string) => {
     throw new AppError("Hotel not found", 404);
   }
 
+  await prisma.hotelImage.deleteMany({
+    where: {
+      hotelId,
+    },
+  });
+
+  await prisma.review.deleteMany({
+    where: {
+      hotelId,
+    },
+  });
+
+  await prisma.room.deleteMany({
+    where: {
+      hotelId,
+    },
+  });
+
+  await prisma.user.updateMany({
+    where: {
+      hotelId,
+    },
+    data: {
+      hotelId: null,
+    },
+  });
+
   await prisma.hotel.delete({
     where: {
       id: hotelId,

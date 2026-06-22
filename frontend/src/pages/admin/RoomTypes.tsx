@@ -12,7 +12,7 @@ const RoomTypes = () => {
   const [roomTypes, setRoomTypes] = useState<any[]>([]);
 
   const [typeName, setTypeName] = useState("");
-
+  const [maxOccupancy, setMaxOccupancy] = useState(1);
   const [description, setDescription] = useState("");
 
   const fetchRoomTypes = async () => {
@@ -35,6 +35,7 @@ const RoomTypes = () => {
     await createRoomType({
       typeName,
       description,
+      maxOccupancy,
     });
 
     setTypeName("");
@@ -71,6 +72,14 @@ const RoomTypes = () => {
             placeholder="Description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            className="border p-2 rounded"
+          />
+
+          <input
+            type="number"
+            placeholder="Max Occupancy"
+            value={maxOccupancy}
+            onChange={(e) => setMaxOccupancy(Number(e.target.value))}
             className="border p-2 rounded"
           />
         </div>

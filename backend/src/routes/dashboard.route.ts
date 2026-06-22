@@ -28,4 +28,11 @@ router.get(
   authorize("ADMIN", "STAFF"),
   DashboardController.recentBookings,
 );
+
+router.get(
+  "/revenue-chart",
+  verifyToken,
+  authorize("ADMIN", "STAFF"),
+  DashboardController.revenueChart,
+);
 export default router;

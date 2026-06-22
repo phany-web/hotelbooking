@@ -203,3 +203,37 @@ export const getRecentBookings = async (hotelId: string) => {
     },
   });
 };
+
+export const getRevenueChart = async (hotelId: string) => {
+  const bookings = await prisma.booking.findMany({
+    where: {
+      status: "COMPLETED",
+
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+
+    select: {
+      totalAmount: true,
+      createdAt: true,
+    },
+  });
+
+  const monthlyRevenue = Array.from({ length: 12 }, (_, index) => ({
+    month: index + 1,
+    revenue: 0,
+  }));
+
+  bookings.forEach((booking) => {
+    const month = new Date(booking.createdAt).getMonth();
+
+    monthlyRevenue[month].revenue += Number(booking.totalAmount);
+  });
+
+  return monthlyRevenue;
+};

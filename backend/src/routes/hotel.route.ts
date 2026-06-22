@@ -17,6 +17,13 @@ router.post(
   "/",
   verifyToken,
   authorize("ADMIN"),
+  validate(createHotelSchema),
+  HotelController.create,
+);
+router.post(
+  "/",
+  verifyToken,
+  authorize("ADMIN"),
 
   validate(createHotelSchema),
 

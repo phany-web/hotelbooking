@@ -26,6 +26,9 @@ export const create = async (req: AuthRequest, res: Response) => {
       data: hotel,
     });
   } catch (error: any) {
+    console.log("DELETE HOTEL ERROR:");
+    console.log(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -45,6 +48,9 @@ export const getAll = async (req: AuthRequest, res: Response) => {
       ...hotels,
     });
   } catch (error: any) {
+    console.log("DELETE HOTEL ERROR:");
+    console.log(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -63,6 +69,9 @@ export const getOne = async (req: AuthRequest, res: Response) => {
       data: hotel,
     });
   } catch (error: any) {
+    console.log("DELETE HOTEL ERROR:");
+    console.log(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -81,6 +90,9 @@ export const update = async (req: AuthRequest, res: Response) => {
       data: hotel,
     });
   } catch (error: any) {
+    console.log("DELETE HOTEL ERROR:");
+    console.log(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -99,6 +111,9 @@ export const remove = async (req: AuthRequest, res: Response) => {
       data: result,
     });
   } catch (error: any) {
+    console.log("DELETE HOTEL ERROR:");
+    console.log(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,
@@ -123,7 +138,10 @@ export const search = async (req: Request, res: Response) => {
       data: hotels,
     });
   } catch (error: any) {
-    res.status(400).json({
+    console.log("DELETE HOTEL ERROR:");
+    console.log(error);
+
+    return res.status(400).json({
       success: false,
       message: error.message,
     });
@@ -140,6 +158,9 @@ export const topHotels = async (req: Request, res: Response) => {
       data: hotels,
     });
   } catch (error: any) {
+    console.log("DELETE HOTEL ERROR:");
+    console.log(error);
+
     return res.status(400).json({
       success: false,
       message: error.message,

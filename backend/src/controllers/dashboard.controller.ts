@@ -71,3 +71,28 @@ export const recentBookings = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+export const revenueChart = async (req: AuthRequest, res: Response) => {
+  try {
+    const hotelId = req.user?.hotelId;
+
+    if (!hotelId) {
+      return res.status(400).json({
+        success: false,
+        message: "Hotel not assigned",
+      });
+    }
+
+    const data = await DashboardService.getRevenueChart(hotelId);
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

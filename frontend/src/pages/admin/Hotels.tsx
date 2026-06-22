@@ -4,8 +4,16 @@ import AdminLayout from "../../layouts/AdminLayout";
 
 import { getAllHotels, deleteHotel } from "../../services/hotel.service";
 
+import HotelModal from "../../components/hotel/HotelModal";
+
 const Hotels = () => {
-  const [hotel, setHotels] = useState<any[]>([]);
+  const [hotels, setHotels] = useState<any[]>([]);
+
+  const [openModal, setOpenModal] = useState(false);
+
+  const [selectedHotel, setSelectedHotel] = useState<any>(null);
+
+  const [loading, setLoading] = useState(true);
 
   const fetchHotels = async () => {
     try {
@@ -14,6 +22,8 @@ const Hotels = () => {
       setHotels(data);
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -26,19 +36,52 @@ const Hotels = () => {
 
     if (!confirmDelete) return;
 
-    await deleteHotel(id);
+    try {
+      await deleteHotel(id);
 
-    fetchHotels();
+      await fetchHotels();
+    } catch (error: any) {
+      console.log(error);
+
+      alert(error?.response?.data?.message || "Cannot delete hotel");
+    }
   };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <h1 className="text-xl font-bold">Loading...</h1>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
-      <h1 className="text-3xl font-bold mb-6">Hotels</h1>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">Hotels</h1>
 
+          <p className="text-gray-500">Manage your hotels</p>
+        </div>
+
+        <button
+          onClick={() => {
+            setSelectedHotel(null);
+
+            setOpenModal(true);
+          }}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+        >
+          Add Hotel
+        </button>
+      </div>
+
+      {/* Table */}
       <div className="bg-white rounded-xl shadow overflow-hidden">
         <table className="w-full">
-          <thead>
-            <tr className="border-b">
+          <thead className="bg-gray-100">
+            <tr>
               <th className="p-4 text-left">Hotel</th>
 
               <th className="p-4 text-left">Location</th>
@@ -52,29 +95,55 @@ const Hotels = () => {
           </thead>
 
           <tbody>
-            {hotel.map((hotel) => (
-              <tr key={hotel.id} className="border-b">
+            {hotels.map((hotel) => (
+              <tr key={hotel.id} className="border-b hover:bg-gray-50">
                 <td className="p-4">{hotel.hotelName}</td>
 
                 <td className="p-4">{hotel.location}</td>
 
-                <td className="p-4">{hotel.phone}</td>
+                <td className="p-4">{hotel.phone || "-"}</td>
 
-                <td className="p-4">{hotel.averageRating}</td>
+                <td className="p-4">⭐ {hotel.averageRating}</td>
 
                 <td className="p-4">
-                  <button
-                    onClick={() => handleDelete(hotel.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded"
-                  >
-                    Delete
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedHotel(hotel);
+
+                        setOpenModal(true);
+                      }}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(hotel.id)}
+                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+
+        {hotels.length === 0 && (
+          <div className="text-center py-10 text-gray-500">No hotels found</div>
+        )}
       </div>
+
+      {/* Modal */}
+      {openModal && (
+        <HotelModal
+          hotel={selectedHotel}
+          onClose={() => setOpenModal(false)}
+          onSuccess={fetchHotels}
+        />
+      )}
     </AdminLayout>
   );
 };

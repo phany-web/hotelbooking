@@ -8,3 +8,9 @@ export const loginUser = async (email: string, password: string) => {
 
   return response.data;
 };
+
+export const getCurrentUser = () => {
+  const user = localStorage.getItem("user");
+
+  return user ? JSON.parse(user) : null;
+};

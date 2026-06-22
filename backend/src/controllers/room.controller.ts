@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { AuthRequest } from "../types/express";
 
 import * as RoomService from "../services/room.service";
 
@@ -85,4 +86,29 @@ export const getByHotel = async (req: Request, res: Response) => {
     success: true,
     data: rooms,
   });
+};
+
+export const getMyHotelRooms = async (req: AuthRequest, res: Response) => {
+  try {
+    const hotelId = req.user?.hotelId;
+
+    if (!hotelId) {
+      return res.status(400).json({
+        success: false,
+        message: "Hotel not assigned",
+      });
+    }
+
+    const rooms = await RoomService.getRoomsByHotel(hotelId);
+
+    return res.json({
+      success: true,
+      data: rooms,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

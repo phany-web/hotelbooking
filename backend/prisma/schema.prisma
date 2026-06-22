@@ -55,7 +55,7 @@ model User {
   role   Role   @relation(fields: [roleId], references: [id])
 
   hotelId String?
-  hotel   Hotel?  @relation("HotelStaffs", fields: [hotelId], references: [id])
+  hotel   Hotel?  @relation("HotelStaffs", fields: [hotelId], references: [id], onDelete: SetNull)
 
   bookings      Booking[]
   notifications Notification[]
@@ -139,7 +139,7 @@ model Room {
   status RoomStatus @default(AVAILABLE)
 
   hotelId String
-  hotel   Hotel  @relation(fields: [hotelId], references: [id])
+  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
 
   roomTypeId String
   roomType   RoomType @relation(fields: [roomTypeId], references: [id])

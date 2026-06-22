@@ -6,18 +6,34 @@ import StatCard from "../../components/dashboard/StatCard";
 import {
   getHotelDashboard,
   getRecentBookings,
+  getRevenueChart,
 } from "../../services/dashboard.service";
 
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from "recharts";
 const Dashboard = () => {
-  const [stats, setStats] = useState<any>(null);
-  const [recentBookings, setRecentBookings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+const [stats, setStats] = useState<any>(null);
+
+const [recentBookings, setRecentBookings] = useState<any[]>([]);
+
+const [revenueData, setRevenueData] = useState<any[]>([]);
+
+const [loading, setLoading] = useState(true);
 
   const fetchDashboard = async () => {
     try {
       const dashboard = await getHotelDashboard();
       const bookings = await getRecentBookings();
+      const revenue = await getRevenueChart();
 
+setRevenueData(revenue);
       setStats(dashboard);
       setRecentBookings(bookings);
     } catch (error) {
@@ -91,13 +107,36 @@ const Dashboard = () => {
 
       {/* Revenue */}
       <div className="mb-10">
-        <h2 className="text-xl font-semibold mb-4">Revenue</h2>
+        <h2 className="text-xl font-semibold mb-4">Revenue Overview</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <StatCard
             title="Total Revenue ($)"
             value={stats?.totalRevenue || 0}
           />
+
+          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow">
+            <h3 className="font-semibold mb-4">Revenue Trend</h3>
+
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" />
+
+                <XAxis dataKey="month" />
+
+                <YAxis />
+
+                <Tooltip />
+
+                <Line
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="#2563eb"
+                  strokeWidth={3}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
@@ -110,13 +149,9 @@ const Dashboard = () => {
             <thead className="bg-gray-100">
               <tr>
                 <th className="p-4 text-left">Customer</th>
-
                 <th className="p-4 text-left">Hotel</th>
-
                 <th className="p-4 text-left">Amount</th>
-
                 <th className="p-4 text-left">Status</th>
-
                 <th className="p-4 text-left">Check In</th>
               </tr>
             </thead>
