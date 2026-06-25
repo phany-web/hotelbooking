@@ -27,7 +27,7 @@ export const getUserById = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
 
-    const user = await enableUserService(id);
+    const user = await getUserByIdService(id);
 
     res.status(200).json({
       success: true,
@@ -45,7 +45,7 @@ export const disableUser = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
 
-    const user = await enableUserService(id);
+    const user = await disableUserService(id);
 
     res.status(200).json({
       success: true,
@@ -64,7 +64,7 @@ export const enableUser = async (req: Request, res: Response) => {
   try {
     const id = req.params.id as string;
 
-    const user = await enableUserService(id);
+    const user = await getUserByIdService(id);
 
     res.status(200).json({
       success: true,

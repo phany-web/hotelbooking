@@ -22,4 +22,10 @@ router.delete(
   ReviewController.remove,
 );
 
+router.get(
+  "/my-hotel",
+  verifyToken,
+  authorize("ADMIN", "STAFF"),
+  ReviewController.getMyHotelReviews,
+);
 export default router;

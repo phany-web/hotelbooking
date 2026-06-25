@@ -10,9 +10,13 @@ import Admins from "../pages/superAdmin/Admins";
 import Hotels from "../pages/admin/Hotels";
 import RoomTypes from "../pages/admin/RoomTypes";
 import Hotel from "../pages/superAdmin/Hotels";
-import Bookings from "../pages/superAdmin/Bookings";
+// import Bookings from "../pages/superAdmin/Bookings";
 import Reviews from "../pages/superAdmin/Reviews";
 import Rooms from "../pages/admin/Rooms";
+import Staff from "../pages/admin/Staff";
+import Bookings from "../pages/admin/Bookings";
+import Customers from "../pages/admin/Customers";
+import Review from "../pages/admin/Reviews";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -117,6 +121,40 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
             <Rooms />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/staff"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <Staff />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/bookings"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <Bookings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/customers"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <Customers />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/reviews"
+        element={
+          <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
+            <Review />
           </ProtectedRoute>
         }
       />

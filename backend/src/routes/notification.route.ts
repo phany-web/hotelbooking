@@ -8,10 +8,10 @@ const router = Router();
 
 router.get("/my", verifyToken, NotificationController.myNotifications);
 
-router.get("/unread-count", verifyToken, NotificationController.unread);
+router.get("/unread-count", verifyToken, NotificationController.unreadCount);
+
+router.patch("/read-all", verifyToken, NotificationController.readAll);
 
 router.patch("/:id/read", verifyToken, NotificationController.read);
-
-router.delete("/:id", verifyToken, NotificationController.remove);
 
 export default router;

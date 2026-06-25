@@ -22,26 +22,41 @@ export const createHotel = async (data: any, adminId: string) => {
       images: true,
     },
   });
-
+  await prisma.user.update({
+    where: {
+      id: adminId,
+    },
+    data: {
+      hotelId: hotel.id,
+    },
+  });
   return hotel;
 };
 
-export const getAllHotels = async (page: number = 1, limit: number = 10) => {
+export const getAllHotels = async (
+  adminId?: string,
+  page: number = 1,
+  limit: number = 10,
+) => {
   const skip = (page - 1) * limit;
 
   const hotels = await prisma.hotel.findMany({
+    where: adminId
+      ? {
+          adminId,
+        }
+      : {},
+
     skip,
     take: limit,
 
     include: {
       images: true,
-
       reviews: {
         select: {
           rating: true,
         },
       },
-
       admin: {
         select: {
           id: true,
@@ -52,7 +67,13 @@ export const getAllHotels = async (page: number = 1, limit: number = 10) => {
     },
   });
 
-  const total = await prisma.hotel.count();
+  const total = await prisma.hotel.count({
+    where: adminId
+      ? {
+          adminId,
+        }
+      : {},
+  });
 
   const formattedHotels = hotels.map((hotel) => {
     const totalReviews = hotel.reviews.length;
@@ -261,8 +282,7 @@ export const searchHotels = async (
 };
 
 export const getTopHotels = async () => {
-  const result = await getAllHotels(1, 1000);
-
+  const result = await getAllHotels("", 1, 1000);
   return result.hotels
     .sort((a, b) => b.averageRating - a.averageRating)
     .slice(0, 10);

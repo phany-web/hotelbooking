@@ -31,4 +31,5 @@ router.patch("/:id/check-in", verifyToken, BookingController.checkIn);
 
 router.patch("/:id/check-out", verifyToken, BookingController.checkOut);
 
+router.get("/my-hotel", verifyToken, BookingController.getMyHotelBookings);
 export default router;

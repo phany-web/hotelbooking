@@ -310,3 +310,32 @@ export const checkOutBooking = async (bookingId: string) => {
     },
   });
 };
+
+export const getBookingsByHotel =
+async (hotelId: string) => {
+  return prisma.booking.findMany({
+    where: {
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+
+    include: {
+      user: true,
+      bookingDetails: {
+        include: {
+          room: {
+            include: {
+              hotel: true,
+              roomType: true,
+            },
+          },
+        },
+      },
+    },
+  });
+};

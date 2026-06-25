@@ -5,26 +5,14 @@ import { AuthRequest } from "../types/express";
 import * as NotificationService from "../services/notification.service";
 
 export const myNotifications = async (req: AuthRequest, res: Response) => {
-  const notifications = await NotificationService.getMyNotifications(
-    req.user!.userId,
-  );
-
-  res.json({
-    success: true,
-    data: notifications,
-  });
-};
-
-export const read = async (req: AuthRequest, res: Response) => {
   try {
-    const result = await NotificationService.markAsRead(
-      req.params.id as string,
+    const notifications = await NotificationService.getMyNotifications(
       req.user!.userId,
     );
 
     res.json({
       success: true,
-      data: result,
+      data: notifications,
     });
   } catch (error: any) {
     res.status(400).json({
@@ -34,25 +22,48 @@ export const read = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const unread = async (req: AuthRequest, res: Response) => {
-  const count = await NotificationService.unreadCount(req.user!.userId);
-
-  res.json({
-    success: true,
-    count,
-  });
-};
-
-export const remove = async (req: AuthRequest, res: Response) => {
+export const read = async (req: AuthRequest, res: Response) => {
   try {
-    const result = await NotificationService.deleteNotification(
+    const notification = await NotificationService.markAsRead(
       req.params.id as string,
       req.user!.userId,
     );
 
     res.json({
       success: true,
-      data: result,
+      data: notification,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const readAll = async (req: AuthRequest, res: Response) => {
+  try {
+    await NotificationService.markAllAsRead(req.user!.userId);
+
+    res.json({
+      success: true,
+      message: "All notifications marked as read",
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const unreadCount = async (req: AuthRequest, res: Response) => {
+  try {
+    const count = await NotificationService.getUnreadCount(req.user!.userId);
+
+    res.json({
+      success: true,
+      data: count,
     });
   } catch (error: any) {
     res.status(400).json({

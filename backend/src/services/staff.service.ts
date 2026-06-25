@@ -7,6 +7,7 @@ export const createStaff = async (
   phone: string,
   password: string,
   hotelId: string,
+  adminId: string
 ) => {
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -26,11 +27,12 @@ export const createStaff = async (
     throw new Error("STAFF role not found");
   }
 
-  const hotel = await prisma.hotel.findUnique({
-    where: {
-      id: hotelId,
-    },
-  });
+const hotel = await prisma.hotel.findFirst({
+  where: {
+    id: hotelId,
+    adminId,
+  },
+});
 
   if (!hotel) {
     throw new Error("Hotel not found");
@@ -55,9 +57,10 @@ export const createStaff = async (
   });
 };
 
-export const getAllStaff = async () => {
+export const getStaffByHotel = async (hotelId: string) => {
   return prisma.user.findMany({
     where: {
+      hotelId,
       role: {
         roleName: "STAFF",
       },
@@ -131,4 +134,61 @@ export const deleteStaff = async (id: string) => {
   return {
     message: "Staff deleted successfully",
   };
+};
+
+export const getAllStaff = async (hotelId?: string) => {
+  return prisma.user.findMany({
+    where: {
+      role: {
+        roleName: "STAFF",
+      },
+
+      ...(hotelId && {
+        hotelId,
+      }),
+    },
+
+    include: {
+      role: true,
+      hotel: true,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
+
+export const getStaffsByAdmin = async (adminId: string) => {
+  const hotels = await prisma.hotel.findMany({
+    where: {
+      adminId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const hotelIds = hotels.map((hotel) => hotel.id);
+
+  return prisma.user.findMany({
+    where: {
+      hotelId: {
+        in: hotelIds,
+      },
+
+      role: {
+        roleName: "STAFF",
+      },
+    },
+
+    include: {
+      role: true,
+      hotel: true,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 };

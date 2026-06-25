@@ -29,23 +29,10 @@ export const getMyNotifications = async (userId: string) => {
 };
 
 export const markAsRead = async (notificationId: string, userId: string) => {
-  const notification = await prisma.notification.findUnique({
-    where: {
-      id: notificationId,
-    },
-  });
-
-  if (!notification) {
-    throw new Error("Notification not found");
-  }
-
-  if (notification.userId !== userId) {
-    throw new Error("Unauthorized");
-  }
-
   return prisma.notification.update({
     where: {
       id: notificationId,
+      userId,
     },
 
     data: {
@@ -54,40 +41,24 @@ export const markAsRead = async (notificationId: string, userId: string) => {
   });
 };
 
-export const unreadCount = async (userId: string) => {
+export const markAllAsRead = async (userId: string) => {
+  return prisma.notification.updateMany({
+    where: {
+      userId,
+      isRead: false,
+    },
+
+    data: {
+      isRead: true,
+    },
+  });
+};
+
+export const getUnreadCount = async (userId: string) => {
   return prisma.notification.count({
     where: {
       userId,
       isRead: false,
     },
   });
-};
-
-export const deleteNotification = async (
-  notificationId: string,
-  userId: string,
-) => {
-  const notification = await prisma.notification.findUnique({
-    where: {
-      id: notificationId,
-    },
-  });
-
-  if (!notification) {
-    throw new Error("Notification not found");
-  }
-
-  if (notification.userId !== userId) {
-    throw new Error("Unauthorized");
-  }
-
-  await prisma.notification.delete({
-    where: {
-      id: notificationId,
-    },
-  });
-
-  return {
-    message: "Notification deleted",
-  };
 };

@@ -91,3 +91,25 @@ export const rating = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getMyHotelReviews = async (req: AuthRequest, res: Response) => {
+  try {
+    const hotelId = req.user?.hotelId;
+
+    if (!hotelId) {
+      throw new Error("Hotel not assigned");
+    }
+
+    const reviews = await ReviewService.getMyHotelReviews(hotelId);
+
+    res.status(200).json({
+      success: true,
+      data: reviews,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

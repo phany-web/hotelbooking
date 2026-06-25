@@ -1,9 +1,20 @@
 import { Request, Response } from "express";
 import * as StaffService from "../services/staff.service";
+import { AuthRequest } from "../types/express";
+import prisma from "../config/prisma";
 
-export const create = async (req: Request, res: Response) => {
+export const create = async (req: AuthRequest, res: Response) => {
   try {
     const { fullName, email, phone, password, hotelId } = req.body;
+
+    if (!hotelId) {
+      return res.status(400).json({
+        success: false,
+        message: "Hotel is required",
+      });
+    }
+
+    const adminId = req.user?.userId;
 
     const staff = await StaffService.createStaff(
       fullName,
@@ -11,27 +22,37 @@ export const create = async (req: Request, res: Response) => {
       phone,
       password,
       hotelId,
+      adminId as string,
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: staff,
     });
   } catch (error: any) {
-    res.status(400).json({
+    return res.status(400).json({
       success: false,
       message: error.message,
     });
   }
 };
 
-export const getAll = async (req: Request, res: Response) => {
-  const staffs = await StaffService.getAllStaff();
+export const getAll = async (req: AuthRequest, res: Response) => {
+  try {
+    const adminId = req.user?.userId as string;
 
-  res.json({
-    success: true,
-    data: staffs,
-  });
+    const staffs = await StaffService.getStaffsByAdmin(adminId);
+
+    return res.json({
+      success: true,
+      data: staffs,
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 export const getOne = async (req: Request, res: Response) => {

@@ -4,7 +4,10 @@ import prisma from "../config/prisma";
 
 import { JWT_SECRET, REFRESH_SECRET } from "../config/env";
 
-export const loginUser = async (email: string, password: string) => {
+export const loginUser = async (
+  email: string,
+  password: string,
+) => {
   const user = await prisma.user.findUnique({
     where: {
       email,
@@ -19,17 +22,31 @@ export const loginUser = async (email: string, password: string) => {
     throw new Error("USER NOT FOUND");
   }
 
-  const match = await bcrypt.compare(password, user.password);
+  const match = await bcrypt.compare(
+    password,
+    user.password,
+  );
 
   if (!match) {
     throw new Error("PASSWORD NOT MATCH");
   }
 
+  // Find hotel owned by admin
+  const ownedHotel = await prisma.hotel.findFirst({
+    where: {
+      adminId: user.id,
+    },
+  });
+
   const accessToken = jwt.sign(
     {
       userId: user.id,
       role: user.role.roleName,
-      hotelId: user.hotelId,
+
+      // ADMIN => owned hotel
+      // STAFF => user.hotelId
+      hotelId:
+        ownedHotel?.id || user.hotelId || null,
     },
 
     JWT_SECRET,
@@ -60,8 +77,13 @@ export const loginUser = async (email: string, password: string) => {
   };
 };
 
-export const refreshAccessToken = async (refreshToken: string) => {
-  const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as {
+export const refreshAccessToken = async (
+  refreshToken: string,
+) => {
+  const decoded = jwt.verify(
+    refreshToken,
+    REFRESH_SECRET,
+  ) as {
     userId: string;
   };
 
@@ -79,11 +101,19 @@ export const refreshAccessToken = async (refreshToken: string) => {
     throw new Error("USER NOT FOUND");
   }
 
+  const ownedHotel = await prisma.hotel.findFirst({
+    where: {
+      adminId: user.id,
+    },
+  });
+
   const accessToken = jwt.sign(
     {
       userId: user.id,
       role: user.role.roleName,
-      hotelId: user.hotelId,
+
+      hotelId: ownedHotel?.id || user.hotelId || null,
+        // ownedHotel?.id || user.hotelId || null,
     },
 
     JWT_SECRET,

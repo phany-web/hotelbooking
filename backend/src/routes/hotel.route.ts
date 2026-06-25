@@ -30,7 +30,11 @@ router.post(
   HotelController.create,
 );
 
-router.get("/", HotelController.getAll);
+router.get(
+  "/",
+  verifyToken,
+  HotelController.getAll
+);
 
 router.get("/:id", HotelController.getOne);
 

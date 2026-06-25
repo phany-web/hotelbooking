@@ -35,22 +35,23 @@ export const create = async (req: AuthRequest, res: Response) => {
     });
   }
 };
-export const getAll = async (req: AuthRequest, res: Response) => {
+export const getAll = async (
+  req: AuthRequest,
+  res: Response
+) => {
   try {
     const page = Number(req.query.page) || 1;
-
     const limit = Number(req.query.limit) || 10;
 
-    const hotels = await getAllHotels(page, limit);
+    const adminId = req.user?.userId;
+
+    const hotels = await getAllHotels(adminId,page,limit);
 
     return res.status(200).json({
       success: true,
       ...hotels,
     });
   } catch (error: any) {
-    console.log("DELETE HOTEL ERROR:");
-    console.log(error);
-
     return res.status(400).json({
       success: false,
       message: error.message,

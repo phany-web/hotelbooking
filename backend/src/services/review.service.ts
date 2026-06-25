@@ -98,7 +98,6 @@ export const deleteReview = async (reviewId: string) => {
   };
 };
 
-
 export const getHotelRating = async (hotelId: string) => {
   const reviews = await prisma.review.findMany({
     where: {
@@ -120,4 +119,28 @@ export const getHotelRating = async (hotelId: string) => {
 
     totalReviews: reviews.length,
   };
+};
+
+export const getMyHotelReviews = async (hotelId: string) => {
+  return prisma.review.findMany({
+    where: {
+      hotelId,
+    },
+
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+        },
+      },
+
+      hotel: true,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 };

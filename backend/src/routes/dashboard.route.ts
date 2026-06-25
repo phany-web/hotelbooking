@@ -1,24 +1,16 @@
 import { Router } from "express";
-
 import * as DashboardController from "../controllers/dashboard.controller";
 
 import { verifyToken } from "../middlewares/auth.middleware";
 
-import { authorize } from "../middlewares/role.middleware";
+import { authorize } from "../middlewares/authorize.middleware";
 
 const router = Router();
 
 router.get(
-  "/system",
-  verifyToken,
-  authorize("SUPER_ADMIN"),
-  DashboardController.systemDashboard,
-);
-
-router.get(
   "/hotel",
   verifyToken,
-  authorize("SUPER_ADMIN", "ADMIN", "STAFF"),
+  authorize("ADMIN", "STAFF"),
   DashboardController.hotelDashboard,
 );
 
@@ -35,4 +27,12 @@ router.get(
   authorize("ADMIN", "STAFF"),
   DashboardController.revenueChart,
 );
+
+router.get(
+  "/system",
+  verifyToken,
+  authorize("SUPER_ADMIN"),
+  DashboardController.systemDashboard
+);
+
 export default router;

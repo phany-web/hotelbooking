@@ -8,19 +8,9 @@ import { authorize } from "../middlewares/authorize.middleware";
 
 const router = Router();
 
-router.post(
-  "/",
-  verifyToken,
-  authorize("ADMIN", "SUPER_ADMIN"),
-  StaffController.create,
-);
+router.post("/", verifyToken, StaffController.create);
 
-router.get(
-  "/",
-  verifyToken,
-  authorize("ADMIN", "SUPER_ADMIN"),
-  StaffController.getAll,
-);
+router.get("/", verifyToken, StaffController.getAll);
 
 router.get(
   "/:id",

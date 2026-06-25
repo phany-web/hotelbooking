@@ -1,5 +1,224 @@
 import prisma from "../config/prisma";
 
+export const getHotelDashboard = async (hotelId: string) => {
+  const totalRooms = await prisma.room.count({
+    where: {
+      hotelId,
+    },
+  });
+
+  const availableRooms = await prisma.room.count({
+    where: {
+      hotelId,
+      status: "AVAILABLE",
+    },
+  });
+
+  const occupiedRooms = await prisma.room.count({
+    where: {
+      hotelId,
+      status: "OCCUPIED",
+    },
+  });
+
+  const maintenanceRooms = await prisma.room.count({
+    where: {
+      hotelId,
+      status: "MAINTENANCE",
+    },
+  });
+
+  const totalBookings = await prisma.booking.count({
+    where: {
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+  });
+
+  const pendingBookings = await prisma.booking.count({
+    where: {
+      status: "PENDING",
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+  });
+
+  const confirmedBookings = await prisma.booking.count({
+    where: {
+      status: "CONFIRMED",
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+  });
+
+  const completedBookings = await prisma.booking.count({
+    where: {
+      status: "COMPLETED",
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+  });
+
+  const revenueBookings = await prisma.booking.findMany({
+    where: {
+      status: "COMPLETED",
+
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+    select: {
+      totalAmount: true,
+    },
+  });
+
+  const totalRevenue = revenueBookings.reduce(
+    (sum, booking) => sum + Number(booking.totalAmount),
+    0,
+  );
+
+  return {
+    totalRooms,
+    availableRooms,
+    occupiedRooms,
+    maintenanceRooms,
+
+    totalBookings,
+    pendingBookings,
+    confirmedBookings,
+    completedBookings,
+
+    occupancyRate:
+      totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0,
+
+    totalRevenue,
+  };
+};
+
+
+export const getRevenueChart =async (hotelId: string) => {
+
+  const bookings =
+    await prisma.booking.findMany({
+      where: {
+        status: "COMPLETED",
+
+        bookingDetails: {
+          some: {
+            room: {
+              hotelId,
+            },
+          },
+        },
+      },
+
+      select: {
+        totalAmount: true,
+        createdAt: true,
+      },
+    });
+
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const revenueMap: Record<
+    string,
+    number
+  > = {};
+
+  months.forEach((month) => {
+    revenueMap[month] = 0;
+  });
+
+  bookings.forEach((booking) => {
+    const month =
+      months[
+        new Date(
+          booking.createdAt
+        ).getMonth()
+      ];
+
+    revenueMap[month] +=
+      Number(booking.totalAmount);
+  });
+
+  return months.map((month) => ({
+    month,
+    revenue: revenueMap[month],
+  }));
+};
+export const getRecentBookings =async (hotelId: string) => {
+
+  return prisma.booking.findMany({
+    where: {
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+
+    include: {
+      user: true,
+
+      bookingDetails: {
+        include: {
+          room: {
+            include: {
+              hotel: true,
+            },
+          },
+        },
+      },
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+
+    take: 10,
+  });
+};
+
+
 export const getSystemDashboard = async () => {
   const [
     totalUsers,
@@ -7,7 +226,7 @@ export const getSystemDashboard = async () => {
     totalRooms,
     totalBookings,
     totalReviews,
-    revenue,
+    revenueResult,
   ] = await Promise.all([
     prisma.user.count(),
 
@@ -37,203 +256,9 @@ export const getSystemDashboard = async () => {
     totalBookings,
     totalReviews,
 
-    totalRevenue: Number(revenue._sum.totalAmount || 0),
+    totalRevenue:
+      Number(
+        revenueResult._sum.totalAmount || 0
+      ),
   };
-};
-
-export const getHotelDashboard = async (hotelId: string) => {
-  const [
-    totalRooms,
-    availableRooms,
-    occupiedRooms,
-    maintenanceRooms,
-
-    totalBookings,
-    pendingBookings,
-    confirmedBookings,
-    completedBookings,
-
-    revenue,
-  ] = await Promise.all([
-    prisma.room.count({
-      where: {
-        hotelId,
-      },
-    }),
-
-    prisma.room.count({
-      where: {
-        hotelId,
-        status: "AVAILABLE",
-      },
-    }),
-
-    prisma.room.count({
-      where: {
-        hotelId,
-        status: "OCCUPIED",
-      },
-    }),
-
-    prisma.room.count({
-      where: {
-        hotelId,
-        status: "MAINTENANCE",
-      },
-    }),
-
-    prisma.bookingDetail.count({
-      where: {
-        room: {
-          hotelId,
-        },
-      },
-    }),
-
-    prisma.booking.count({
-      where: {
-        bookingDetails: {
-          some: {
-            room: {
-              hotelId,
-            },
-          },
-        },
-        status: "PENDING",
-      },
-    }),
-
-    prisma.booking.count({
-      where: {
-        bookingDetails: {
-          some: {
-            room: {
-              hotelId,
-            },
-          },
-        },
-        status: "CONFIRMED",
-      },
-    }),
-
-    prisma.booking.count({
-      where: {
-        bookingDetails: {
-          some: {
-            room: {
-              hotelId,
-            },
-          },
-        },
-        status: "COMPLETED",
-      },
-    }),
-
-    prisma.booking.aggregate({
-      _sum: {
-        totalAmount: true,
-      },
-
-      where: {
-        status: "COMPLETED",
-
-        bookingDetails: {
-          some: {
-            room: {
-              hotelId,
-            },
-          },
-        },
-      },
-    }),
-  ]);
-
-  const occupancyRate =
-    totalRooms === 0
-      ? 0
-      : Number(((occupiedRooms / totalRooms) * 100).toFixed(2));
-
-  return {
-    totalRooms,
-    availableRooms,
-    occupiedRooms,
-    maintenanceRooms,
-
-    totalBookings,
-    pendingBookings,
-    confirmedBookings,
-    completedBookings,
-
-    totalRevenue: Number(revenue._sum.totalAmount || 0),
-
-    occupancyRate,
-  };
-};
-
-export const getRecentBookings = async (hotelId: string) => {
-  return prisma.booking.findMany({
-    where: {
-      bookingDetails: {
-        some: {
-          room: {
-            hotelId,
-          },
-        },
-      },
-    },
-
-    take: 5,
-
-    orderBy: {
-      createdAt: "desc",
-    },
-
-    include: {
-      user: true,
-
-      bookingDetails: {
-        include: {
-          room: {
-            include: {
-              hotel: true,
-            },
-          },
-        },
-      },
-    },
-  });
-};
-
-export const getRevenueChart = async (hotelId: string) => {
-  const bookings = await prisma.booking.findMany({
-    where: {
-      status: "COMPLETED",
-
-      bookingDetails: {
-        some: {
-          room: {
-            hotelId,
-          },
-        },
-      },
-    },
-
-    select: {
-      totalAmount: true,
-      createdAt: true,
-    },
-  });
-
-  const monthlyRevenue = Array.from({ length: 12 }, (_, index) => ({
-    month: index + 1,
-    revenue: 0,
-  }));
-
-  bookings.forEach((booking) => {
-    const month = new Date(booking.createdAt).getMonth();
-
-    monthlyRevenue[month].revenue += Number(booking.totalAmount);
-  });
-
-  return monthlyRevenue;
 };

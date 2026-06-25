@@ -143,3 +143,22 @@ export const checkOut = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+export const getMyHotelBookings =
+async (
+  req: AuthRequest,
+  res: Response
+) => {
+  const hotelId =
+    req.user?.hotelId;
+
+  const bookings =
+    await BookingService.getBookingsByHotel(
+      hotelId!
+    );
+
+  res.json({
+    success: true,
+    data: bookings,
+  });
+};

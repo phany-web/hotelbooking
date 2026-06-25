@@ -8,6 +8,7 @@ import HotelModal from "../../components/hotel/HotelModal";
 
 const Hotels = () => {
   const [hotels, setHotels] = useState<any[]>([]);
+const [hotelId, setHotelId] = useState("");
 
   const [openModal, setOpenModal] = useState(false);
 
@@ -15,6 +16,7 @@ const Hotels = () => {
 
   const [loading, setLoading] = useState(true);
 
+  
   const fetchHotels = async () => {
     try {
       const data = await getAllHotels();

@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 
-
 import { errorHandler } from "./middlewares/error.middleware";
 const app = express();
 import authRoute from "./routes/auth.route";
@@ -19,6 +18,8 @@ import staffRoute from "./routes/staff.route";
 import advertisementRoute from "./routes/advertisement.route";
 import uploadRoute from "./routes/upload.route";
 import userRoute from "./routes/user.route";
+import dashboardRoute from "./routes/dashboard.route";
+import customerRoute from "./routes/customer.route";
 
 app.use(cors());
 app.use(helmet());
@@ -38,6 +39,7 @@ app.use("/api/staff", staffRoute);
 app.use("/api/advertisement", advertisementRoute);
 app.use("/api/upload", uploadRoute);
 app.use("/api/users", userRoute);
-
+app.use("/api/dashboard", dashboardRoute);
+app.use("/api/customer", customerRoute);
 app.use(errorHandler);
 export default app;
