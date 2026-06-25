@@ -172,13 +172,12 @@ model Booking {
   payments        Payment[]
   notifications   Notification[]
   bookingServices BookingService[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("bookings")
   @@index([userId])
-@@index([status])
+  @@index([status])
+  @@map("bookings")
 }
 
 model BookingDetail {
@@ -223,7 +222,6 @@ model Payment {
   updatedAt DateTime @updatedAt
 
   @@map("payments")
-  @@index([bookingId])
 }
 
 model Notification {
@@ -242,8 +240,8 @@ model Notification {
 
   createdAt DateTime @default(now())
 
-  @@map("notifications")
   @@index([userId])
+  @@map("notifications")
 }
 
 model Review {

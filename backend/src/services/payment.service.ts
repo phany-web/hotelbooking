@@ -1,7 +1,8 @@
 import prisma from "../config/prisma";
-import { createNotification } from "./notification.service";
+
 export const createPayment = async (
   bookingId: string,
+  amount: number,
   paymentMethod: string,
 ) => {
   const booking = await prisma.booking.findUnique({
@@ -17,19 +18,9 @@ export const createPayment = async (
   const payment = await prisma.payment.create({
     data: {
       bookingId,
-      amount: booking.totalAmount,
+      amount,
       paymentMethod,
       paymentStatus: "PENDING",
-    },
-  });
-
-  return payment;
-};
-
-export const payBooking = async (paymentId: string) => {
-  const payment = await prisma.payment.findUnique({
-    where: {
-      id: paymentId,
     },
 
     include: {
@@ -37,64 +28,37 @@ export const payBooking = async (paymentId: string) => {
     },
   });
 
-  if (!payment) {
-    throw new Error("Payment not found");
-  }
-
-  await prisma.payment.update({
-    where: {
-      id: paymentId,
-    },
-
-    data: {
-      paymentStatus: "PAID",
-
-      transactionRef: "TXN-" + Date.now(),
-    },
-  });
-
-  await prisma.booking.update({
-    where: {
-      id: payment.bookingId,
-    },
-
-    data: {
-      status: "CONFIRMED",
-    },
-  });
-  await createNotification(
-    payment.booking.userId,
-    "Payment Success",
-    "Your payment has been completed.",
-    payment.bookingId,
-  );
-  return prisma.payment.findUnique({
-    where: {
-      id: paymentId,
-    },
-  });
+  return payment;
 };
 
 export const getAllPayments = async () => {
   return prisma.payment.findMany({
     include: {
-      booking: true,
+      booking: {
+        include: {
+          user: true,
+        },
+      },
     },
 
     orderBy: {
-      paymentDate: "desc",
+      createdAt: "desc",
     },
   });
 };
 
-export const getPaymentById = async (id: string) => {
+export const getPaymentById = async (paymentId: string) => {
   const payment = await prisma.payment.findUnique({
     where: {
-      id,
+      id: paymentId,
     },
 
     include: {
-      booking: true,
+      booking: {
+        include: {
+          user: true,
+        },
+      },
     },
   });
 
@@ -103,4 +67,44 @@ export const getPaymentById = async (id: string) => {
   }
 
   return payment;
+};
+
+export const updatePaymentStatus = async (
+  paymentId: string,
+  paymentStatus: "PAID" | "FAILED",
+) => {
+  const payment = await prisma.payment.findUnique({
+    where: {
+      id: paymentId,
+    },
+  });
+
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+
+  const updatedPayment = await prisma.payment.update({
+    where: {
+      id: paymentId,
+    },
+
+    data: {
+      paymentStatus,
+      transactionRef: crypto.randomUUID(),
+    },
+  });
+
+  if (paymentStatus === "PAID") {
+    await prisma.booking.update({
+      where: {
+        id: payment.bookingId,
+      },
+
+      data: {
+        status: "CONFIRMED",
+      },
+    });
+  }
+
+  return updatedPayment;
 };
