@@ -1,5 +1,7 @@
 import prisma from "../config/prisma";
 
+import { AppError } from "../utils/AppError";
+
 export const getAllUsersService = async () => {
   return prisma.user.findMany({
     include: {
@@ -22,7 +24,7 @@ export const getUserByIdService = async (id: string) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found");
   }
 
   return user;
@@ -34,7 +36,7 @@ export const disableUserService = async (id: string) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found");
   }
 
   return prisma.user.update({
@@ -52,7 +54,7 @@ export const enableUserService = async (id: string) => {
   });
 
   if (!user) {
-    throw new Error("User not found");
+    throw new AppError("User not found");
   }
 
   return prisma.user.update({

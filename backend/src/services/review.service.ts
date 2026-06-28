@@ -1,5 +1,6 @@
 import prisma from "../config/prisma";
 import { createNotification } from "./notification.service";
+import { AppError } from "../utils/AppError";
 export const createReview = async (
   userId: string,
   hotelId: string,
@@ -7,7 +8,7 @@ export const createReview = async (
   comment?: string,
 ) => {
   if (rating < 1 || rating > 5) {
-    throw new Error("Rating must be between 1 and 5");
+    throw new AppError("Rating must be between 1 and 5");
   }
 
   const hotel = await prisma.hotel.findUnique({
@@ -17,7 +18,7 @@ export const createReview = async (
   });
 
   if (!hotel) {
-    throw new Error("Hotel not found");
+    throw new AppError("Hotel not found");
   }
 
   const review = await prisma.review.create({
@@ -84,7 +85,7 @@ export const deleteReview = async (reviewId: string) => {
   });
 
   if (!review) {
-    throw new Error("Review not found");
+    throw new AppError("Review not found");
   }
 
   await prisma.review.delete({

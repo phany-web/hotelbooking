@@ -35,4 +35,13 @@ router.get(
   DashboardController.systemDashboard
 );
 
+router.get(
+  "/housekeeping/:hotelId",
+  verifyToken,
+  authorize(
+    "ADMIN",
+    "STAFF"
+  ),
+  DashboardController.housekeeping
+);
 export default router;

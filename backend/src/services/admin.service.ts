@@ -1,18 +1,20 @@
 import bcrypt from "bcrypt";
 import prisma from "../config/prisma";
 
+import { AppError } from "../utils/AppError";
+
 export const createAdminService = async (
   fullName: string,
   email: string,
   password: string,
-  phone: string
+  phone: string,
 ) => {
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
 
   if (existingUser) {
-    throw new Error("Email already exists");
+    throw new AppError("Email already exists");
   }
 
   const adminRole = await prisma.role.findFirst({
@@ -22,13 +24,10 @@ export const createAdminService = async (
   });
 
   if (!adminRole) {
-    throw new Error("ADMIN role not found");
+    throw new AppError("ADMIN role not found");
   }
 
-  const hashedPassword = await bcrypt.hash(
-    password,
-    10
-  );
+  const hashedPassword = await bcrypt.hash(password, 10);
 
   const admin = await prisma.user.create({
     data: {
@@ -47,87 +46,68 @@ export const createAdminService = async (
   return admin;
 };
 
-export const getAllAdminsService =
-  async () => {
-    return prisma.user.findMany({
-      where: {
-        role: {
-          roleName: "ADMIN",
-        },
+export const getAllAdminsService = async () => {
+  return prisma.user.findMany({
+    where: {
+      role: {
+        roleName: "ADMIN",
       },
-      include: {
-        role: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-  };
+    },
+    include: {
+      role: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
 
-export const disableAdminService =
-  async (id: string) => {
-    const admin =
-      await prisma.user.findUnique({
-        where: { id },
-        include: {
-          role: true,
-        },
-      });
+export const disableAdminService = async (id: string) => {
+  const admin = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      role: true,
+    },
+  });
 
-    console.log("ADMIN =", admin);
+  console.log("ADMIN =", admin);
 
-    if (!admin) {
-      throw new Error(
-        "Admin not found"
-      );
-    }
+  if (!admin) {
+    throw new AppError("Admin not found");
+  }
 
-    if (
-      admin.role.roleName !==
-      "ADMIN"
-    ) {
-      throw new Error(
-        "User is not admin"
-      );
-    }
+  if (admin.role.roleName !== "ADMIN") {
+    throw new AppError("User is not admin");
+  }
 
-    return prisma.user.update({
-      where: { id },
-      data: {
-        isActive: false,
-      },
-    });
-  };
+  return prisma.user.update({
+    where: { id },
+    data: {
+      isActive: false,
+    },
+  });
+};
 
-export const enableAdminService =
-  async (id: string) => {
-    const admin =
-      await prisma.user.findUnique({
-        where: { id },
-        include: {
-          role: true,
-        },
-      });
+export const enableAdminService = async (id: string) => {
+  const admin = await prisma.user.findUnique({
+    where: { id },
+    include: {
+      role: true,
+    },
+  });
 
-    if (!admin) {
-      throw new Error(
-        "Admin not found"
-      );
-    }
+  if (!admin) {
+    throw new AppError("Admin not found");
+  }
 
-    if (
-      admin.role.roleName !==
-      "ADMIN"
-    ) {
-      throw new Error(
-        "User is not admin"
-      );
-    }
+  if (admin.role.roleName !== "ADMIN") {
+    throw new AppError("User is not admin");
+  }
 
-    return prisma.user.update({
-      where: { id },
-      data: {
-        isActive: true,
-      },
-    });
-  };
+  return prisma.user.update({
+    where: { id },
+    data: {
+      isActive: true,
+    },
+  });
+};

@@ -1,5 +1,5 @@
-
 import prisma from "../config/prisma";
+import { AppError } from "../utils/AppError";
 
 export const createRoomType = async (data: {
   typeName: string;
@@ -19,18 +19,13 @@ export const getAllRoomTypes = async () => {
   });
 };
 
-export const getRoomTypeById = async (
-  id: string
-) => {
-  const roomType =
-    await prisma.roomType.findUnique({
-      where: { id },
-    });
+export const getRoomTypeById = async (id: string) => {
+  const roomType = await prisma.roomType.findUnique({
+    where: { id },
+  });
 
   if (!roomType) {
-    throw new Error(
-      "Room type not found"
-    );
+    throw new AppError("Room type not found");
   }
 
   return roomType;
@@ -42,17 +37,14 @@ export const updateRoomType = async (
     typeName?: string;
     description?: string;
     maxOccupancy?: number;
-  }
+  },
 ) => {
-  const roomType =
-    await prisma.roomType.findUnique({
-      where: { id },
-    });
+  const roomType = await prisma.roomType.findUnique({
+    where: { id },
+  });
 
   if (!roomType) {
-    throw new Error(
-      "Room type not found"
-    );
+    throw new AppError("Room type not found");
   }
 
   return prisma.roomType.update({
@@ -61,18 +53,13 @@ export const updateRoomType = async (
   });
 };
 
-export const deleteRoomType = async (
-  id: string
-) => {
-  const roomType =
-    await prisma.roomType.findUnique({
-      where: { id },
-    });
+export const deleteRoomType = async (id: string) => {
+  const roomType = await prisma.roomType.findUnique({
+    where: { id },
+  });
 
   if (!roomType) {
-    throw new Error(
-      "Room type not found"
-    );
+    throw new AppError("Room type not found");
   }
 
   await prisma.roomType.delete({
@@ -80,7 +67,6 @@ export const deleteRoomType = async (
   });
 
   return {
-    message:
-      "Room type deleted successfully",
+    message: "Room type deleted successfully",
   };
 };

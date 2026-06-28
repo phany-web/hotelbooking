@@ -2,12 +2,11 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "../config/prisma";
 
+import { AppError } from "../utils/AppError";
+
 import { JWT_SECRET, REFRESH_SECRET } from "../config/env";
 
-export const loginUser = async (
-  email: string,
-  password: string,
-) => {
+export const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({
     where: {
       email,
@@ -19,16 +18,13 @@ export const loginUser = async (
   });
 
   if (!user) {
-    throw new Error("USER NOT FOUND");
+    throw new AppError("USER NOT FOUND");
   }
 
-  const match = await bcrypt.compare(
-    password,
-    user.password,
-  );
+  const match = await bcrypt.compare(password, user.password);
 
   if (!match) {
-    throw new Error("PASSWORD NOT MATCH");
+    throw new AppError("PASSWORD NOT MATCH");
   }
 
   // Find hotel owned by admin
@@ -45,8 +41,7 @@ export const loginUser = async (
 
       // ADMIN => owned hotel
       // STAFF => user.hotelId
-      hotelId:
-        ownedHotel?.id || user.hotelId || null,
+      hotelId: ownedHotel?.id || user.hotelId || null,
     },
 
     JWT_SECRET,
@@ -77,13 +72,8 @@ export const loginUser = async (
   };
 };
 
-export const refreshAccessToken = async (
-  refreshToken: string,
-) => {
-  const decoded = jwt.verify(
-    refreshToken,
-    REFRESH_SECRET,
-  ) as {
+export const refreshAccessToken = async (refreshToken: string) => {
+  const decoded = jwt.verify(refreshToken, REFRESH_SECRET) as {
     userId: string;
   };
 
@@ -98,7 +88,7 @@ export const refreshAccessToken = async (
   });
 
   if (!user) {
-    throw new Error("USER NOT FOUND");
+    throw new AppError("USER NOT FOUND");
   }
 
   const ownedHotel = await prisma.hotel.findFirst({
@@ -113,7 +103,7 @@ export const refreshAccessToken = async (
       role: user.role.roleName,
 
       hotelId: ownedHotel?.id || user.hotelId || null,
-        // ownedHotel?.id || user.hotelId || null,
+      // ownedHotel?.id || user.hotelId || null,
     },
 
     JWT_SECRET,

@@ -3,11 +3,7 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/env";
 import { AuthRequest } from "../types/express";
 
-export const verifyToken = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const verifyToken = (req: AuthRequest, res: Response, next: NextFunction,) => {
   try {
     console.log("JWT_SECRET =", JWT_SECRET);
 
@@ -35,7 +31,6 @@ export const verifyToken = (
     next();
   } catch (error) {
     console.log("JWT ERROR =", error);
-
     return res.status(401).json({
       success: false,
       message: "Invalid token",

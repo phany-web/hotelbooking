@@ -12,7 +12,6 @@ export const validate =
         errors: result.error.flatten().fieldErrors,
       });
     }
-
     req.body = result.data;
 
     next();

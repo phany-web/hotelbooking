@@ -1,5 +1,5 @@
 import prisma from "../config/prisma";
-
+import { AppError } from "../utils/AppError";
 export const createRoom = async (data: {
   roomNumber: string;
   floorNumber?: number;
@@ -14,7 +14,7 @@ export const createRoom = async (data: {
   });
 
   if (!hotel) {
-    throw new Error("Hotel not found");
+    throw new AppError("Hotel not found");
   }
 
   const roomType = await prisma.roomType.findUnique({
@@ -24,7 +24,7 @@ export const createRoom = async (data: {
   });
 
   if (!roomType) {
-    throw new Error("Room type not found");
+    throw new AppError("Room type not found");
   }
 
   return prisma.room.create({
@@ -58,7 +58,7 @@ export const getRoomById = async (id: string) => {
   });
 
   if (!room) {
-    throw new Error("Room not found");
+    throw new AppError("Room not found");
   }
 
   return room;

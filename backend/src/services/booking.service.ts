@@ -1,6 +1,9 @@
 import prisma from "../config/prisma";
 import { createNotification } from "./notification.service";
 import { AppError } from "../utils/AppError";
+import { BookingStatus, RoomStatus } from "@prisma/client";
+import { createAuditLog } from "./auditLog.service";
+
 export const createBooking = async (
   userId: string,
   roomId: string,
@@ -18,21 +21,18 @@ export const createBooking = async (
   });
 
   if (!room) {
-    throw new AppError(
-  "Room not found",
-  404
-);
+    throw new AppError("Room not found", 404);
   }
 
   if (room.status === "MAINTENANCE" || room.status === "CLEANING") {
-    throw new Error(`Room is currently ${room.status}`);
+    throw new AppError(`Room is currently ${room.status}`);
   }
 
   const checkIn = new Date(checkInDate);
   const checkOut = new Date(checkOutDate);
 
   if (checkOut <= checkIn) {
-    throw new Error("Check-out date must be after check-in date");
+    throw new AppError("Check-out date must be after check-in date");
   }
 
   const conflictBooking = await prisma.bookingDetail.findFirst({
@@ -54,7 +54,7 @@ export const createBooking = async (
   });
 
   if (conflictBooking) {
-    throw new Error("Room already booked for selected dates");
+    throw new AppError("Room already booked for selected dates");
   }
 
   const nights = Math.ceil(
@@ -182,7 +182,7 @@ export const getBookingById = async (id: string) => {
   });
 
   if (!booking) {
-    throw new Error("Booking not found");
+    throw new AppError("Booking not found");
   }
 
   return booking;
@@ -233,7 +233,7 @@ export const getAllBookings = async (page = 1, limit = 10) => {
   };
 };
 
-export const cancelBooking = async (bookingId: string, userId: string) => {
+export const cancelBooking = async (bookingId: string) => {
   const booking = await prisma.booking.findUnique({
     where: {
       id: bookingId,
@@ -241,78 +241,122 @@ export const cancelBooking = async (bookingId: string, userId: string) => {
   });
 
   if (!booking) {
-    throw new Error("Booking not found");
+    throw new AppError("Booking not found", 404);
   }
 
-  if (booking.userId !== userId) {
-    throw new Error("You cannot cancel this booking");
-  }
-
-  if (booking.status === "COMPLETED") {
-    throw new Error("Completed booking cannot be cancelled");
+  if (
+    booking.status === BookingStatus.CHECKED_IN ||
+    booking.status === BookingStatus.CHECKED_OUT
+  ) {
+    throw new AppError("Cannot cancel completed booking", 400);
   }
 
   return prisma.booking.update({
     where: {
       id: bookingId,
     },
-
     data: {
-      status: "CANCELLED",
+      status: BookingStatus.CANCELLED,
     },
   });
 };
 
-export const checkInBooking = async (bookingId: string) => {
-  const booking = await getBookingById(bookingId);
-
-  const roomId = booking.bookingDetails[0].room.id;
-
-  await prisma.room.update({
-    where: {
-      id: roomId,
-    },
-    data: {
-      status: "OCCUPIED",
-    },
-  });
-
-  return prisma.booking.update({
+export const checkInBooking = async (bookingId: string, userId: string) => {
+  const booking = await prisma.booking.findUnique({
     where: {
       id: bookingId,
     },
-    data: {
-      status: "CONFIRMED",
+    include: {
+      bookingDetails: true,
     },
   });
+
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  if (booking.status !== BookingStatus.CONFIRMED) {
+    throw new AppError("Booking must be confirmed before check-in", 400);
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: {
+        id: bookingId,
+      },
+      data: {
+        status: BookingStatus.CHECKED_IN,
+        actualCheckIn: new Date(),
+      },
+    });
+
+    for (const detail of booking.bookingDetails) {
+      await tx.room.update({
+        where: {
+          id: detail.roomId,
+        },
+        data: {
+          status: RoomStatus.OCCUPIED,
+        },
+      });
+    }
+  });
+
+  await createAuditLog(userId, "BOOKING_CHECKED_IN", "BOOKING", bookingId, {
+    bookingId,
+    checkedInAt: new Date(),
+  });
+
+  return {
+    success: true,
+    message: "Check-in completed",
+  };
 };
 
 export const checkOutBooking = async (bookingId: string) => {
-  const booking = await getBookingById(bookingId);
-
-  const roomId = booking.bookingDetails[0].room.id;
-
-  await prisma.room.update({
-    where: {
-      id: roomId,
-    },
-    data: {
-      status: "CLEANING",
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      bookingDetails: true,
     },
   });
 
-  return prisma.booking.update({
-    where: {
-      id: bookingId,
-    },
-    data: {
-      status: "COMPLETED",
-    },
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  if (booking.status !== BookingStatus.CHECKED_IN) {
+    throw new AppError("Guest must be checked in first", 400);
+  }
+
+  return prisma.$transaction(async (tx) => {
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: BookingStatus.CHECKED_OUT,
+        actualCheckOut: new Date(),
+      },
+    });
+
+    for (const detail of booking.bookingDetails) {
+      await tx.room.update({
+        where: {
+          id: detail.roomId,
+        },
+        data: {
+          status: RoomStatus.DIRTY,
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: "Check-out completed",
+    };
   });
 };
 
-export const getBookingsByHotel =
-async (hotelId: string) => {
+export const getBookingsByHotel = async (hotelId: string) => {
   return prisma.booking.findMany({
     where: {
       bookingDetails: {
@@ -338,4 +382,49 @@ async (hotelId: string) => {
       },
     },
   });
+};
+
+export const confirmBooking = async (bookingId: string, userId: string) => {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+  });
+
+  if (!booking) {
+    throw new AppError("Booking not found", 404);
+  }
+
+  if (booking.status !== BookingStatus.PENDING) {
+    throw new AppError("Only pending bookings can be confirmed", 400);
+  }
+
+  const updatedBooking = await prisma.booking.update({
+    where: { id: bookingId },
+    data: {
+      status: BookingStatus.CONFIRMED,
+    },
+  });
+
+  await createAuditLog(userId, "BOOKING_CONFIRMED", "BOOKING", bookingId);
+
+  return updatedBooking;
+};
+
+export const getBookingReport = async (hotelId: string) => {
+  const bookings = await prisma.booking.groupBy({
+    by: ["status"],
+
+    where: {
+      bookingDetails: {
+        some: {
+          room: {
+            hotelId,
+          },
+        },
+      },
+    },
+
+    _count: true,
+  });
+
+  return bookings;
 };

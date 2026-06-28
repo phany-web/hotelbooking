@@ -1,105 +1,109 @@
 import prisma from "../config/prisma";
 
 export const getHotelDashboard = async (hotelId: string) => {
-  const totalRooms = await prisma.room.count({
-    where: {
-      hotelId,
-    },
-  });
+  const [
+    totalRooms,
+    availableRooms,
+    occupiedRooms,
+    maintenanceRooms,
 
-  const availableRooms = await prisma.room.count({
-    where: {
-      hotelId,
-      status: "AVAILABLE",
-    },
-  });
+    totalBookings,
+    pendingBookings,
+    confirmedBookings,
+    completedBookings,
 
-  const occupiedRooms = await prisma.room.count({
-    where: {
-      hotelId,
-      status: "OCCUPIED",
-    },
-  });
+    revenueResult,
+  ] = await Promise.all([
+    prisma.room.count({
+      where: { hotelId },
+    }),
 
-  const maintenanceRooms = await prisma.room.count({
-    where: {
-      hotelId,
-      status: "MAINTENANCE",
-    },
-  });
+    prisma.room.count({
+      where: {
+        hotelId,
+        status: "AVAILABLE",
+      },
+    }),
 
-  const totalBookings = await prisma.booking.count({
-    where: {
-      bookingDetails: {
-        some: {
-          room: {
-            hotelId,
+    prisma.room.count({
+      where: {
+        hotelId,
+        status: "OCCUPIED",
+      },
+    }),
+
+    prisma.room.count({
+      where: {
+        hotelId,
+        status: "MAINTENANCE",
+      },
+    }),
+
+    prisma.booking.count({
+      where: {
+        bookingDetails: {
+          some: {
+            room: { hotelId },
           },
         },
       },
-    },
-  });
+    }),
 
-  const pendingBookings = await prisma.booking.count({
-    where: {
-      status: "PENDING",
-      bookingDetails: {
-        some: {
-          room: {
-            hotelId,
+    prisma.booking.count({
+      where: {
+        status: "PENDING",
+        bookingDetails: {
+          some: {
+            room: { hotelId },
           },
         },
       },
-    },
-  });
+    }),
 
-  const confirmedBookings = await prisma.booking.count({
-    where: {
-      status: "CONFIRMED",
-      bookingDetails: {
-        some: {
-          room: {
-            hotelId,
+    prisma.booking.count({
+      where: {
+        status: "CONFIRMED",
+        bookingDetails: {
+          some: {
+            room: { hotelId },
           },
         },
       },
-    },
-  });
+    }),
 
-  const completedBookings = await prisma.booking.count({
-    where: {
-      status: "COMPLETED",
-      bookingDetails: {
-        some: {
-          room: {
-            hotelId,
+    prisma.booking.count({
+      where: {
+        status: "CHECKED_OUT",
+        bookingDetails: {
+          some: {
+            room: { hotelId },
           },
         },
       },
-    },
-  });
+    }),
 
-  const revenueBookings = await prisma.booking.findMany({
-    where: {
-      status: "COMPLETED",
+    prisma.payment.aggregate({
+      where: {
+        paymentStatus: "PAID",
 
-      bookingDetails: {
-        some: {
-          room: {
-            hotelId,
+        booking: {
+          bookingDetails: {
+            some: {
+              room: {
+                hotelId,
+              },
+            },
           },
         },
       },
-    },
-    select: {
-      totalAmount: true,
-    },
-  });
 
-  const totalRevenue = revenueBookings.reduce(
-    (sum, booking) => sum + Number(booking.totalAmount),
-    0,
-  );
+      _sum: {
+        amount: true,
+      },
+    }),
+  ]);
+
+  const totalRevenue = Number(revenueResult._sum.amount) || 0;
 
   return {
     totalRooms,
@@ -119,14 +123,12 @@ export const getHotelDashboard = async (hotelId: string) => {
   };
 };
 
+export const getRevenueChart = async (hotelId: string) => {
+  const payments = await prisma.payment.findMany({
+    where: {
+      paymentStatus: "PAID",
 
-export const getRevenueChart =async (hotelId: string) => {
-
-  const bookings =
-    await prisma.booking.findMany({
-      where: {
-        status: "COMPLETED",
-
+      booking: {
         bookingDetails: {
           some: {
             room: {
@@ -135,12 +137,13 @@ export const getRevenueChart =async (hotelId: string) => {
           },
         },
       },
+    },
 
-      select: {
-        totalAmount: true,
-        createdAt: true,
-      },
-    });
+    select: {
+      amount: true,
+      paymentDate: true,
+    },
+  });
 
   const months = [
     "Jan",
@@ -157,25 +160,16 @@ export const getRevenueChart =async (hotelId: string) => {
     "Dec",
   ];
 
-  const revenueMap: Record<
-    string,
-    number
-  > = {};
+  const revenueMap: Record<string, number> = {};
 
   months.forEach((month) => {
     revenueMap[month] = 0;
   });
 
-  bookings.forEach((booking) => {
-    const month =
-      months[
-        new Date(
-          booking.createdAt
-        ).getMonth()
-      ];
+  payments.forEach((payment) => {
+    const month = months[new Date(payment.paymentDate).getMonth()];
 
-    revenueMap[month] +=
-      Number(booking.totalAmount);
+    revenueMap[month] += Number(payment.amount);
   });
 
   return months.map((month) => ({
@@ -183,8 +177,8 @@ export const getRevenueChart =async (hotelId: string) => {
     revenue: revenueMap[month],
   }));
 };
-export const getRecentBookings =async (hotelId: string) => {
 
+export const getRecentBookings = async (hotelId: string) => {
   return prisma.booking.findMany({
     where: {
       bookingDetails: {
@@ -218,7 +212,6 @@ export const getRecentBookings =async (hotelId: string) => {
   });
 };
 
-
 export const getSystemDashboard = async () => {
   const [
     totalUsers,
@@ -238,13 +231,13 @@ export const getSystemDashboard = async () => {
 
     prisma.review.count(),
 
-    prisma.booking.aggregate({
-      _sum: {
-        totalAmount: true,
+    prisma.payment.aggregate({
+      where: {
+        paymentStatus: "PAID",
       },
 
-      where: {
-        status: "COMPLETED",
+      _sum: {
+        amount: true,
       },
     }),
   ]);
@@ -256,9 +249,43 @@ export const getSystemDashboard = async () => {
     totalBookings,
     totalReviews,
 
-    totalRevenue:
-      Number(
-        revenueResult._sum.totalAmount || 0
-      ),
+    totalRevenue: Number(revenueResult._sum.amount) || 0,
+  };
+};
+
+export const getHousekeepingDashboard = async (hotelId: string) => {
+  const dirtyRooms = await prisma.room.count({
+    where: {
+      hotelId,
+      cleaningStatus: "DIRTY",
+    },
+  });
+
+  const cleaningRooms = await prisma.room.count({
+    where: {
+      hotelId,
+      cleaningStatus: "CLEANING",
+    },
+  });
+
+  const cleanRooms = await prisma.room.count({
+    where: {
+      hotelId,
+      cleaningStatus: "CLEAN",
+    },
+  });
+
+  const maintenanceRooms = await prisma.room.count({
+    where: {
+      hotelId,
+      status: "MAINTENANCE",
+    },
+  });
+
+  return {
+    dirtyRooms,
+    cleaningRooms,
+    cleanRooms,
+    maintenanceRooms,
   };
 };

@@ -1,4 +1,5 @@
 import prisma from "../config/prisma";
+import { AppError } from "../utils/AppError";
 
 export const createAdvertisement = async (
   title: string,
@@ -28,7 +29,7 @@ export const getAdvertisementById = async (id: string) => {
   });
 
   if (!advertisement) {
-    throw new Error("Advertisement not found");
+    throw new AppError("Advertisement not found");
   }
 
   return advertisement;
@@ -40,7 +41,7 @@ export const updateAdvertisement = async (id: string, data: any) => {
   });
 
   if (!advertisement) {
-    throw new Error("Advertisement not found");
+    throw new AppError("Advertisement not found");
   }
 
   return prisma.advertisement.update({
@@ -55,7 +56,7 @@ export const deleteAdvertisement = async (id: string) => {
   });
 
   if (!advertisement) {
-    throw new Error("Advertisement not found");
+    throw new AppError("Advertisement not found");
   }
 
   await prisma.advertisement.delete({

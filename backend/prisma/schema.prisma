@@ -9,6 +9,7 @@ datasource db {
 enum RoomStatus {
   AVAILABLE
   OCCUPIED
+  DIRTY
   CLEANING
   MAINTENANCE
 }
@@ -17,14 +18,27 @@ enum BookingStatus {
   PENDING
   CONFIRMED
   CHECKED_IN
-  COMPLETED
+  CHECKED_OUT
   CANCELLED
+  NO_SHOW
 }
 
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum CleaningStatus {
+  CLEAN
+  DIRTY
+  CLEANING
 }
 
 model Role {
@@ -60,6 +74,8 @@ model User {
   bookings      Booking[]
   notifications Notification[]
   reviews       Review[]
+  tasks         StaffTask[]
+  auditLogs     AuditLog[]
 
   ownedHotels Hotel[] @relation("HotelOwner")
 
@@ -136,15 +152,16 @@ model Room {
 
   price Decimal @db.Decimal(10, 2)
 
-  status RoomStatus @default(AVAILABLE)
-
-  hotelId String
-  hotel   Hotel  @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  status         RoomStatus     @default(AVAILABLE)
+  cleaningStatus CleaningStatus @default(CLEAN)
+  hotelId        String
+  hotel          Hotel          @relation(fields: [hotelId], references: [id], onDelete: Cascade)
 
   roomTypeId String
   roomType   RoomType @relation(fields: [roomTypeId], references: [id])
 
   bookingDetails BookingDetail[]
+  tasks          StaffTask[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,10 +175,11 @@ model Booking {
 
   bookingDate DateTime @default(now())
 
-  checkInDate  DateTime
-  checkOutDate DateTime
-
-  status BookingStatus @default(PENDING)
+  checkInDate    DateTime
+  checkOutDate   DateTime
+  actualCheckIn  DateTime?
+  actualCheckOut DateTime?
+  status         BookingStatus @default(PENDING)
 
   totalAmount Decimal @db.Decimal(10, 2)
 
@@ -212,6 +230,10 @@ model Payment {
   paymentStatus PaymentStatus @default(PENDING)
 
   transactionRef String?
+
+  khqrString String?
+
+  bakongTxnId String?
 
   paymentDate DateTime @default(now())
 
@@ -318,4 +340,45 @@ model Advertisement {
   updatedAt DateTime @updatedAt
 
   @@map("advertisements")
+}
+
+model StaffTask {
+  id String @id @default(uuid())
+
+  title String
+
+  description String?
+
+  status TaskStatus @default(PENDING)
+
+  roomId String
+  room   Room   @relation(fields: [roomId], references: [id])
+
+  staffId String
+  staff   User   @relation(fields: [staffId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("staff_tasks")
+}
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  action     String
+  entityType String
+  entityId   String
+
+  metadata Json?
+
+  userId String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entityType, entityId])
+   @@map("audit_logs")
 }

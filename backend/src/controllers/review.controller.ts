@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../types/express";
+import { AppError } from "../utils/AppError";
 
 import * as ReviewService from "../services/review.service";
 
@@ -97,7 +98,7 @@ export const getMyHotelReviews = async (req: AuthRequest, res: Response) => {
     const hotelId = req.user?.hotelId;
 
     if (!hotelId) {
-      throw new Error("Hotel not assigned");
+      throw new AppError("Hotel not assigned");
     }
 
     const reviews = await ReviewService.getMyHotelReviews(hotelId);

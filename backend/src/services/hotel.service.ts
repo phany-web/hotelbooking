@@ -125,7 +125,7 @@ export const getHotelById = async (hotelId: string) => {
   });
 
   if (!hotel) {
-    throw new Error("Hotel not found");
+    throw new AppError("Hotel not found");
   }
 
   const totalReviews = hotel.reviews.length;

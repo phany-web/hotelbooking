@@ -1,20 +1,22 @@
 import bcrypt from "bcrypt";
 import prisma from "../config/prisma";
 
+import { AppError } from "../utils/AppError";
+
 export const createStaff = async (
   fullName: string,
   email: string,
   phone: string,
   password: string,
   hotelId: string,
-  adminId: string
+  adminId: string,
 ) => {
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
 
   if (existingUser) {
-    throw new Error("Email already exists");
+    throw new AppError("Email already exists");
   }
 
   const role = await prisma.role.findUnique({
@@ -24,18 +26,18 @@ export const createStaff = async (
   });
 
   if (!role) {
-    throw new Error("STAFF role not found");
+    throw new AppError("STAFF role not found");
   }
 
-const hotel = await prisma.hotel.findFirst({
-  where: {
-    id: hotelId,
-    adminId,
-  },
-});
+  const hotel = await prisma.hotel.findFirst({
+    where: {
+      id: hotelId,
+      adminId,
+    },
+  });
 
   if (!hotel) {
-    throw new Error("Hotel not found");
+    throw new AppError("Hotel not found");
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -88,7 +90,7 @@ export const getStaffById = async (id: string) => {
   });
 
   if (!staff) {
-    throw new Error("Staff not found");
+    throw new AppError("Staff not found");
   }
 
   return staff;
@@ -100,7 +102,7 @@ export const updateStaff = async (id: string, data: any) => {
   });
 
   if (!staff) {
-    throw new Error("Staff not found");
+    throw new AppError("Staff not found");
   }
 
   if (data.password) {
@@ -124,7 +126,7 @@ export const deleteStaff = async (id: string) => {
   });
 
   if (!staff) {
-    throw new Error("Staff not found");
+    throw new AppError("Staff not found");
   }
 
   await prisma.user.delete({

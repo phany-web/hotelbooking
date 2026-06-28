@@ -1,8 +1,5 @@
-import { Response } from "express";
-
+import { Response, Request } from "express";
 import { AuthRequest } from "../types/express";
-import prisma from "../config/prisma";
-
 import * as DashboardService from "../services/dashboard.service";
 
 export const hotelDashboard = async (req: AuthRequest, res: Response) => {
@@ -71,6 +68,33 @@ export const systemDashboard = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const housekeeping = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { hotelId } = req.params;
+
+    const data =
+      await DashboardService.getHousekeepingDashboard(
+        hotelId as string
+      );
+
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      success: false,
+      message:
+        "Failed to load housekeeping dashboard",
     });
   }
 };

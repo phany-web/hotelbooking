@@ -1,8 +1,10 @@
 import { Response } from "express";
-
 import { AuthRequest } from "../types/express";
+// import { asyncHandler } from "../utils/asyncHandler";
 
 import * as BookingService from "../services/booking.service";
+// import { confirmBooking } from "../services/booking.service";
+// import { checkOutBooking } from "../services/booking.service";
 
 export const create = async (req: AuthRequest, res: Response) => {
   try {
@@ -93,7 +95,7 @@ export const cancel = async (req: AuthRequest, res: Response) => {
   try {
     const booking = await BookingService.cancelBooking(
       req.params.id as string,
-      req.user!.userId,
+      // req.user!.userId,
     );
 
     res.status(200).json({
@@ -112,6 +114,7 @@ export const checkIn = async (req: AuthRequest, res: Response) => {
   try {
     const booking = await BookingService.checkInBooking(
       req.params.id as string,
+      req.user!.userId,
     );
 
     res.status(200).json({
@@ -144,21 +147,32 @@ export const checkOut = async (req: AuthRequest, res: Response) => {
   }
 };
 
-export const getMyHotelBookings =
-async (
-  req: AuthRequest,
-  res: Response
-) => {
-  const hotelId =
-    req.user?.hotelId;
+export const getMyHotelBookings = async (req: AuthRequest, res: Response) => {
+  const hotelId = req.user?.hotelId;
 
-  const bookings =
-    await BookingService.getBookingsByHotel(
-      hotelId!
-    );
+  const bookings = await BookingService.getBookingsByHotel(hotelId!);
 
   res.json({
     success: true,
     data: bookings,
   });
+};
+
+export const confirm = async (req: AuthRequest, res: Response) => {
+  try {
+    const booking = await BookingService.confirmBooking(
+      req.params.id as string,
+      req.user!.userId,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: booking,
+    });
+  } catch (error: any) {
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
