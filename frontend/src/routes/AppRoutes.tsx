@@ -19,6 +19,8 @@ import Customers from "../pages/admin/Customers";
 import Review from "../pages/admin/Reviews";
 
 import ProtectedRoute from "../components/ProtectedRoute";
+import Register from "../pages/auth/Register";
+import HotelDetail from "../pages/public/HotelDetail";
 
 const AppRoutes = () => {
   return (
@@ -26,7 +28,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
 
       <Route path="/login" element={<Login />} />
-
+      <Route path="/register" element={<Register />} />
       <Route
         path="/admin"
         element={
@@ -89,14 +91,14 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/admin"
         element={
           <ProtectedRoute allowedRoles={["ADMIN", "STAFF"]}>
             <AdminDashboard />
           </ProtectedRoute>
         }
-      />
+      /> */}
 
       <Route
         path="/admin/hotels"
@@ -158,6 +160,8 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route path="/hotel/:id" element={<HotelDetail />} />
     </Routes>
   );
 };

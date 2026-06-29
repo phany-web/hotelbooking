@@ -112,7 +112,21 @@ export const getHotelById = async (hotelId: string) => {
     include: {
       images: true,
 
-      reviews: true,
+      rooms: {
+        include: {
+          roomType: true,
+        },
+      },
+
+      reviews: {
+        include: {
+          user: {
+            select: {
+              fullName: true,
+            },
+          },
+        },
+      },
 
       admin: {
         select: {
