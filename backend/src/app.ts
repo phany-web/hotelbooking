@@ -51,5 +51,6 @@ app.use("/api/audit-logs", auditLogRoute);
 app.use("/api/reports", reportRoute);
 app.use("/api/invoices", invoiceRoute);
 app.use("/api/exports", exportRoute);
+app.use("/api/staff-task", staffTaskRoute);
 app.use(errorHandler);
 export default app;

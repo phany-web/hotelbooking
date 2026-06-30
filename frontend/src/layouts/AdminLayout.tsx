@@ -7,13 +7,15 @@ interface Props {
 
 const AdminLayout = ({ children }: Props) => {
   return (
-    <div className="flex">
+    <div className="h-screen flex bg-slate-50 overflow-hidden">
       <Sidebar role="ADMIN" />
 
-      <div className="flex-1 bg-slate-100 min-h-screen">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <Topbar />
 
-        <div className="p-6">{children}</div>
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

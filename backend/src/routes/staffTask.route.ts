@@ -3,43 +3,73 @@ import { Router } from "express";
 import * as StaffTaskController from "../controllers/staffTask.controller";
 
 import { verifyToken } from "../middlewares/auth.middleware";
-
 import { authorize } from "../middlewares/authorize.middleware";
-
-import { getDashboard } from "../controllers/staffTask.controller";
 
 const router = Router();
 
-router.post("/", verifyToken, StaffTaskController.create);
+/**
+ * =========================
+ * ADMIN ONLY
+ * =========================
+ */
 
-// router.get(
-//   "/dashboard",
-//   verifyToken,
-//   authorize("STAFF"),
-//   StaffTaskController.dashboard,
-// );
+// Create task (assign staff to room cleaning, etc.)
+router.post(
+  "/",
+  verifyToken,
+  authorize("ADMIN", "SUPER_ADMIN"),
+  StaffTaskController.create
+);
+
+// Get all tasks (admin view)
 router.get(
-  "/dashboard",
+  "/",
+  verifyToken,
+  authorize("ADMIN", "SUPER_ADMIN"),
+  StaffTaskController.getAll
+);
+
+/**
+ * =========================
+ * STAFF ONLY
+ * =========================
+ */
+
+// Get logged-in staff tasks
+router.get(
+  "/me",
   verifyToken,
   authorize("STAFF"),
-  StaffTaskController.getDashboard,
+  StaffTaskController.myTasks
 );
-router.get("/", verifyToken, StaffTaskController.getAll);
 
-router.get("/my-tasks", verifyToken, StaffTaskController.myTasks);
+// Start task (change to IN_PROGRESS + room = CLEANING)
 router.patch(
   "/:id/start",
   verifyToken,
   authorize("STAFF"),
-  StaffTaskController.startTask,
+  StaffTaskController.startTask
 );
 
+// Complete task (change to COMPLETED + room = AVAILABLE)
 router.patch(
   "/:id/complete",
   verifyToken,
   authorize("STAFF"),
-  StaffTaskController.completeTask,
+  StaffTaskController.completeTask
 );
-router.patch("/:id", verifyToken, StaffTaskController.updateStatus);
+
+/**
+ * =========================
+ * OPTIONAL (ADMIN VIEW DASHBOARD DATA)
+ * =========================
+ */
+
+router.get(
+  "/dashboard",
+  verifyToken,
+  authorize("STAFF", "ADMIN"),
+  StaffTaskController.dashboard
+);
 
 export default router;

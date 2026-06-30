@@ -1,12 +1,11 @@
 import prisma from "../config/prisma";
-import { TaskStatus } from "@prisma/client";
 
-
+/* ================= CREATE TASK ================= */
 export const createTask = async (
   title: string,
   description: string,
   roomId: string,
-  staffId: string,
+  staffId: string
 ) => {
   return prisma.staffTask.create({
     data: {
@@ -15,82 +14,89 @@ export const createTask = async (
       roomId,
       staffId,
     },
+    include: {
+      room: true,
+      staff: true,
+    },
   });
 };
 
-export const getTasks = async () => {
+/* ================= GET ALL ================= */
+export const getAllTasks = async () => {
   return prisma.staffTask.findMany({
     include: {
       room: true,
       staff: true,
     },
-
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
   });
 };
 
-export const updateStatus = async (id: string, status: TaskStatus) => {
-  return prisma.staffTask.update({
-    where: {
-      id,
-    },
-
-    data: {
-      status,
-    },
-  });
-};
-
+/* ================= MY TASKS ================= */
 export const getMyTasks = async (staffId: string) => {
   return prisma.staffTask.findMany({
-    where: {
-      staffId,
-    },
-
-    include: {
-      room: true,
-    },
-
-    orderBy: {
-      createdAt: "desc",
-    },
+    where: { staffId },
+    include: { room: true },
+    orderBy: { createdAt: "desc" },
   });
 };
 
-export const getStaffDashboard = async (staffId: string) => {
-  const totalTasks = await prisma.staffTask.count({
-    where: {
-      staffId,
-    },
-  });
-
-  const pendingTasks = await prisma.staffTask.count({
-    where: {
-      staffId,
-      status: "PENDING",
-    },
-  });
-
-  const inProgressTasks = await prisma.staffTask.count({
-    where: {
-      staffId,
+/* ================= START TASK ================= */
+export const startTask = async (taskId: string) => {
+  const task = await prisma.staffTask.update({
+    where: { id: taskId },
+    data: {
       status: "IN_PROGRESS",
     },
   });
 
-  const completedTasks = await prisma.staffTask.count({
-    where: {
-      staffId,
+  // 🔥 ROOM UPDATE (MOVES TO CLEANING)
+  await prisma.room.update({
+    where: { id: task.roomId },
+    data: {
+      status: "CLEANING",
+      cleaningStatus: "CLEANING",
+    },
+  });
+
+  return task;
+};
+
+/* ================= COMPLETE TASK ================= */
+export const completeTask = async (taskId: string) => {
+  const task = await prisma.staffTask.update({
+    where: { id: taskId },
+    data: {
       status: "COMPLETED",
     },
   });
 
+  // 🔥 ROOM BECOMES AVAILABLE
+  await prisma.room.update({
+    where: { id: task.roomId },
+    data: {
+      status: "AVAILABLE",
+      cleaningStatus: "CLEAN",
+    },
+  });
+
+  return task;
+};
+
+/* ================= DASHBOARD ================= */
+export const getStaffDashboard = async (staffId: string) => {
+  const tasks = await prisma.staffTask.findMany({
+    where: { staffId },
+  });
+
+  const pending = tasks.filter(t => t.status === "PENDING").length;
+  const inProgress = tasks.filter(t => t.status === "IN_PROGRESS").length;
+  const completed = tasks.filter(t => t.status === "COMPLETED").length;
+
   return {
-    totalTasks,
-    pendingTasks,
-    inProgressTasks,
-    completedTasks,
+    total: tasks.length,
+    pending,
+    inProgress,
+    completed,
   };
 };

@@ -1,39 +1,17 @@
-interface HotelImage {
-  id: string;
-  imageUrl: string;
-}
-
 interface Props {
-  images: HotelImage[];
-  hotelName: string;
+  images: { imageUrl: string }[];
 }
 
-const HotelGallery = ({ images, hotelName }: Props) => {
-  const cover =
-    images.length > 0
-      ? images[0].imageUrl
-      : "https://placehold.co/1200x600?text=No+Image";
-
+const HotelGallery = ({ images }: Props) => {
   return (
-    <div className="space-y-4">
-      <img
-        src={cover}
-        alt={hotelName}
-        className="w-full h-[420px] rounded-xl object-cover"
-      />
-
-      {images.length > 1 && (
-        <div className="grid grid-cols-4 gap-3">
-          {images.slice(1).map((image) => (
-            <img
-              key={image.id}
-              src={image.imageUrl}
-              alt=""
-              className="h-28 w-full rounded-lg object-cover"
-            />
-          ))}
-        </div>
-      )}
+    <div className="grid grid-cols-3 gap-2 h-100 overflow-hidden">
+      {images.slice(0, 3).map((img, index) => (
+        <img
+          key={index}
+          src={img.imageUrl}
+          className="w-full h-full object-cover rounded-lg"
+        />
+      ))}
     </div>
   );
 };

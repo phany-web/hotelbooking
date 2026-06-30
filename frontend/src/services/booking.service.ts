@@ -1,11 +1,23 @@
 import api from "./axios";
-
+import axios from "axios";
+import { useAuthStore } from "../store/auth.store";
 export const getMyHotelBookings = async () => {
   const response = await api.get("/booking/my-hotel");
 
   return response.data.data;
 };
 
+const API = "http://localhost:5000/api/booking";
+
+export const createBooking = async (data: any) => {
+  const token = useAuthStore.getState().token;
+
+  return axios.post(API, data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
 export const confirmBooking = async (
   id: string
 ) => {

@@ -301,3 +301,22 @@ export const getTopHotels = async () => {
     .sort((a, b) => b.averageRating - a.averageRating)
     .slice(0, 10);
 };
+
+export const getRoomsByAdmin = async (adminId: string) => {
+  return prisma.room.findMany({
+    where: {
+      hotel: {
+        adminId,
+      },
+    },
+
+    include: {
+      hotel: true,
+      roomType: true,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};

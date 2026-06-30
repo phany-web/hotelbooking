@@ -49,3 +49,22 @@ export interface Hotel {
 
   reviews: Review[];
 }
+export interface Hotel {
+  id: string;
+
+  hotelName: string;
+
+  location: string;
+
+  address: string;
+
+  thumbnail: string;
+
+  startingPrice: number;
+
+  rating: number;
+
+  reviewCount: number;
+
+  availableRooms: number;
+}

@@ -6,13 +6,10 @@ import { useAuthStore } from "../../store/auth.store";
 
 const Login = () => {
   const navigate = useNavigate();
-
   const { setAuth } = useAuthStore();
 
   const [email, setEmail] = useState("");
-
   const [password, setPassword] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,25 +19,35 @@ const Login = () => {
       setLoading(true);
 
       const response = await loginUser(email, password);
-
       const authData = response.data;
 
       const role = authData.user.role.roleName;
 
       localStorage.setItem("refreshToken", authData.refreshToken);
 
-      setAuth(authData.accessToken, role);
+      setAuth(authData.accessToken, role, {
+        id: authData.user.id,
+        fullName: authData.user.fullName,
+        email: authData.user.email,
+        role,
+        hotelId: authData.user.hotelId,
+      });
 
-      if (role === "SUPER_ADMIN") {
-        navigate("/super-admin");
-      } else if (role === "ADMIN" || role === "STAFF") {
-        navigate("/admin");
-      } else {
-        navigate("/");
+      switch (role) {
+        case "SUPER_ADMIN":
+          navigate("/super-admin");
+          break;
+        case "ADMIN":
+          navigate("/admin");
+          break;
+        case "STAFF":
+          navigate("/staff");
+          break;
+        default:
+          navigate("/");
       }
     } catch (error: any) {
       console.log(error?.response?.data);
-
       alert(error?.response?.data?.message || "Login Failed");
     } finally {
       setLoading(false);

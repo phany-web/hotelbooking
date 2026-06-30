@@ -1,9 +1,8 @@
 import api from "./axios";
 
 export const getAllRooms = async () => {
-  const response = await api.get("/room");
-
-  return response.data.data;
+  const res = await api.get("/room");
+  return res.data.data;   // MUST BE data.data
 };
 
 export const getRoomsByHotel = async (hotelId: string) => {

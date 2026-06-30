@@ -90,17 +90,8 @@ export const getByHotel = async (req: Request, res: Response) => {
 
 export const getMyHotelRooms = async (req: AuthRequest, res: Response) => {
   try {
-    const hotelId = req.user?.hotelId;
-
-    if (!hotelId) {
-      return res.status(400).json({
-        success: false,
-        message: "Hotel not assigned",
-      });
-    }
-
-    const rooms = await RoomService.getRoomsByHotel(hotelId);
-
+    const userId = req.user?.userId;
+    const rooms = await RoomService.getRoomsByAdmin(userId as string);
     return res.json({
       success: true,
       data: rooms,

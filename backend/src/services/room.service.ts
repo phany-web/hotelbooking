@@ -87,7 +87,30 @@ export const getRoomsByHotel = async (hotelId: string) => {
       hotelId,
     },
     include: {
+      hotel: true,
       roomType: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
+
+export const getRoomsByAdmin = async (adminId: string) => {
+  return prisma.room.findMany({
+    where: {
+      hotel: {
+        adminId,
+      },
+    },
+
+    include: {
+      hotel: true,
+      roomType: true,
+    },
+
+    orderBy: {
+      createdAt: "desc",
     },
   });
 };
